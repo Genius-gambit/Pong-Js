@@ -1,135 +1,147 @@
-const canvas = document.getElementById("canvas");
+const canvas =<HTMLCanvasElement> document.getElementById("canvas");
 const ctx = canvas.getContext('2d');
 
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
-const keysPressed = [];
+const keysPressed = [] as boolean[];
 const paddleSpeed = 20;
 
-window.addEventListener('keydown', function (e)
-{
-	keysPressed[e.keyCode] = true;
-});
+window.addEventListener('keydown', function (e) { keysPressed[e.keyCode] = true; });
 
-window.addEventListener('keyup', function (e)
-{
-	keysPressed[e.keyCode] = false;
-});
+window.addEventListener('keyup', function (e) { keysPressed[e.keyCode] = false; });
 
-function vec2(x, y)
-{
-	return {x: x, y: y};
-};
+function vec2(x: number, y: number) : {x: number, y: number} { return {x, y}; };
 
-function ballClass(pos, velocity, radius)
+class	ballClass
 {
-	this.pos = pos;
-	this.velocity = velocity;
-	this.radius = radius;
-	this.update = function()
+	_pos: {x: number, y: number};
+	_velocity: {x: number, y: number};
+	_radius: number;
+
+	constructor(startpos: { x: number, y: number }, velocity: { x: number, y: number }, radius: number)
 	{
-		this.pos.x += this.velocity.x;
-		this.pos.y += this.velocity.y;
-	};
+		this._pos = startpos;
+		this._velocity = velocity;
+		this._radius = radius;
+	}
 
-	this.draw = function()
+	update = function()
+	{
+		this._pos.x += this._velocity.x;
+		this._pos.y += this._velocity.y;
+	}
+
+	draw = function()
 	{
 		ctx.fillStyle = "#33ff00";
 		ctx.strokeStyle = "#33ff00";
 		ctx.beginPath();
-		ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+		ctx.arc(this._pos.x, this._pos.y, this._radius, 0, Math.PI * 2);
 		ctx.fill();
 		ctx.stroke();
-	};
-};
+	}
+}
 
-function paddleClass(pos, velocity, width, height, keyUpPressed, keyDownPressed)
+class	paddleClass
 {
-	this.pos = pos;
-	this.velocity = velocity;
-	this.width = width;
-	this.height = height;
-	this.score = 0;
+	_pos: {x: number, y: number};
+	_velocity: {x: number, y: number};
+	_width: number;
+	_height: number;
+	_keyUpPressed: number;
+	_keyDownPressed: number;
+	_score: number;
 
-	this.update = function()
+	constructor(startpos: {x: number, y: number}, velocity: {x: number, y: number},
+		width: number, height: number, keyUpPressed: number, keyDownPressed: number)
 	{
-		if (keysPressed[keyUpPressed])
-			this.pos.y -= this.velocity.y;
-		if (keysPressed[keyDownPressed])
-			this.pos.y += this.velocity.y;
-	};
+		this._pos = startpos;
+		this._velocity = velocity;
+		this._width = width;
+		this._height = height;
+		this._keyUpPressed = keyUpPressed;
+		this._keyDownPressed = keyDownPressed;
+		this._score = 0;
+	}
 
-	this.draw = function()
+	update = function()
+	{
+		if (keysPressed[this._keyUpPressed])
+			this._pos.y -= this._velocity.y;
+		if (keysPressed[this._keyDownPressed])
+			this._pos.y += this._velocity.y;
+	}
+
+	draw = function()
 	{
 		ctx.fillStyle = "#33ff00";
-		ctx.fillRect(this.pos.x, this.pos.y, this.width, this.height);
-	};
-
-	this.getHalfWidth = function () { return (this.width / 2); };
-	this.getHalfHeight = function () { return (this.height / 2); };
-	this.getCenter = function() {  return vec2(this.pos.x + this.getHalfWidth(), this.pos.y + this.getHalfHeight()); };
-
-};
-
-function	paddleCollision_Edges(paddle)
-{
-	if (paddle.pos.y <= 0)
-		paddle.pos.y = 0;
-	if (paddle.pos.y + paddle.height >= canvas.height)
-		paddle.pos.y = canvas.height - paddle.height;
-};
-
-function ballCollisionEdges(ball)
-{
-	if ((ball.pos.x + ball.radius >= canvas.width) || (ball.pos.x - ball.radius <= 0))
-		ball.velocity.x *= -1;
-	if ((ball.pos.y + ball.radius >= canvas.height) || (ball.pos.y - ball.radius <= 0))
-		ball.velocity.y *= -1;
-};
-
-function	respawnBall(ball)
-{
-	if (ball.velocity.x > 0)
-	{
-		ball.pos.x = canvas.width - 150;
-		ball.pos.y = (Math.random() * (canvas.height - 200)) + 100;
+		ctx.fillRect(this._pos.x, this._pos.y, this._width, this._height);
 	}
 
-	if (ball.velocity.x < 0)
-	{
-		ball.pos.x = 150;
-		ball.pos.y = (Math.random() * (canvas.height - 200)) + 100;
-	}
-	ball.velocity.x *= -1;
+	getHalfWidth = function () { return (this._width / 2); }
+	getHalfHeight = function () { return (this._height / 2); }
+	getCenter = function() {  return vec2(this._pos.x + this.getHalfWidth(), this._pos.y + this.getHalfHeight()); }
+}
+
+function	paddleCollision_Edges(paddle: paddleClass)
+{
+	if (paddle._pos.y <= 0)
+		paddle._pos.y = 0;
+	if (paddle._pos.y + paddle._height >= canvas.height)
+		paddle._pos.y = canvas.height - paddle._height;
+}
+
+function ballCollisionEdges(ball: ballClass)
+{
+	if ((ball._pos.x + ball._radius >= canvas.width) || (ball._pos.x - ball._radius <= 0))
+		ball._velocity.x *= -1;
+	if ((ball._pos.y + ball._radius >= canvas.height) || (ball._pos.y - ball._radius <= 0))
+		ball._velocity.y *= -1;
 };
 
-function increaseScore(ball, paddle1, paddle2)
+function	respawnBall(ball: ballClass)
 {
-	if (ball.pos.x <= -ball.radius)
+	if (ball._velocity.x > 0)
 	{
-		paddle2.score++;
-		document.getElementById("player2Score").innerHTML = paddle2.score;
+		ball._pos.x = canvas.width - 150;
+		ball._pos.y = (Math.random() * (canvas.height - 200)) + 100;
+	}
+
+	if (ball._velocity.x < 0)
+	{
+		ball._pos.x = 150;
+		ball._pos.y = (Math.random() * (canvas.height - 200)) + 100;
+	}
+	ball._velocity.x *= -1;
+}
+
+function increaseScore(ball: ballClass, paddle1: paddleClass, paddle2: paddleClass)
+{
+	if (ball._pos.x <= -ball._radius)
+	{
+		paddle2._score++;
+		document.getElementById("player2Score").innerHTML = paddle2._score.toString();
 		respawnBall(ball);
 	}
 
-	if (ball.pos.x >= canvas.width + ball.radius)
+	if (ball._pos.x >= canvas.width + ball._radius)
 	{
-		paddle1.score++;
-		document.getElementById("player1Score").innerHTML = paddle1.score;
+		paddle1._score++;
+		document.getElementById("player1Score").innerHTML = paddle1._score.toString();
 		respawnBall(ball);
 	}
-};
+}
 
-function	ballPaddleCollision(ball, paddle)
+function	ballPaddleCollision(ball: ballClass, paddle: paddleClass)
 {
-	let dx = Math.abs(ball.pos.x - paddle.getCenter().x);
-	let dy = Math.abs(ball.pos.y - paddle.getCenter().y);
+	let dx = Math.abs(ball._pos.x - paddle.getCenter().x);
+	let dy = Math.abs(ball._pos.y - paddle.getCenter().y);
 
-	if ((dx <= (ball.radius + paddle.getHalfWidth()))
-	&& (dy <= (ball.radius + paddle.getHalfHeight())))
-		ball.velocity.x *= -1;
-};
+	if ((dx <= (ball._radius + paddle.getHalfWidth()))
+	&& (dy <= (ball._radius + paddle.getHalfHeight())))
+		ball._velocity.x *= -1;
+}
 
 const ball = new ballClass(vec2(canvas.width / 2, canvas.height / 2), vec2(10, 10), 30);
 const paddle1 = new paddleClass(vec2(20, canvas.height / 2), vec2(paddleSpeed, paddleSpeed), 20, 160, 87, 83);
@@ -145,7 +157,7 @@ function	gameUpdate()
 	ballCollisionEdges(ball);
 	ballPaddleCollision(ball,paddle1);
 	ballPaddleCollision(ball, paddle2);
-};
+}
 
 function	gameDraw()
 {
@@ -161,6 +173,6 @@ function	gameLoop()
 
 	gameUpdate();
 	gameDraw();
-};
+}
 
 gameLoop();
