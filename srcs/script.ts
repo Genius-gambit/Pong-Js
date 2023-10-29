@@ -1,5 +1,5 @@
 const canvas =<HTMLCanvasElement> document.getElementById("canvas");
-const ctx = canvas.getContext('2d');
+const ctx = <CanvasRenderingContext2D> canvas.getContext('2d');
 
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
@@ -94,8 +94,6 @@ function	paddleCollision_Edges(paddle: paddleClass)
 
 function ballCollisionEdges(ball: ballClass)
 {
-	if ((ball._pos.x + ball._radius >= canvas.width) || (ball._pos.x - ball._radius <= 0))
-		ball._velocity.x *= -1;
 	if ((ball._pos.y + ball._radius >= canvas.height) || (ball._pos.y - ball._radius <= 0))
 		ball._velocity.y *= -1;
 };
@@ -133,22 +131,94 @@ function increaseScore(ball: ballClass, paddle1: paddleClass, paddle2: paddleCla
 	}
 }
 
+function	PlayerOne_PaddleCollision(paddle1 : paddleClass) : void
+{
+	if (ball._pos.x - (ball._radius / 2) < paddle1._pos.x
+		&& ball._pos.y + ball._radius >= paddle1._pos.y
+		&& ball._pos.y + ball._radius <= (paddle1._pos.y + (paddle1._height / 4)))
+		{
+			ball._velocity.x = -10;
+			return ;
+		}
+	if (ball._pos.x - (ball._radius / 2) < paddle1._pos.x
+		&& (ball._pos.y + ball._radius) >= (paddle1._pos.y + paddle1._height - (paddle1._height / 4))
+		&& (ball._pos.y - ball._radius) <= (paddle1._pos.y + paddle1._height))
+		{
+			ball._velocity.x = -10;
+			return ;
+		}
+	if (ball._pos.x - ball._radius >= paddle1._pos.x
+		&& ball._pos.x - ball._radius <= paddle1._pos.x + paddle1._width
+		&& ball._pos.y + ball._radius >= paddle1._pos.y
+		&& ball._pos.y + ball._radius <= paddle1._pos.y + (paddle1._height / 4))
+		{
+			ball._velocity.y = -10
+			ball._velocity.x = 10; 
+		}
+	if (ball._pos.x - ball._radius >= paddle1._pos.x
+		&& ball._pos.x - ball._radius <= paddle1._pos.x + paddle1._width
+		&& ball._pos.y - ball._radius <= paddle1._pos.y + paddle1._height
+		&& ball._pos.y + ball._radius >= paddle1._pos.y + paddle1._height - (paddle1._height / 4))
+		{
+			ball._velocity.y = 10
+			ball._velocity.x = 10; 
+		}
+}
+
+function	PlayerTwo_PaddleCollision(paddle2 : paddleClass) : void
+{
+	if (ball._pos.x + (ball._radius / 2) > paddle2._pos.x
+		&& ball._pos.y + ball._radius >= paddle2._pos.y
+		&& ball._pos.y + ball._radius <= (paddle2._pos.y + (paddle2._height / 4)))
+		{
+			ball._velocity.x = 10;
+			return ;
+		}
+	if (ball._pos.x + (ball._radius / 2) > paddle2._pos.x
+		&& (ball._pos.y - ball._radius) <= (paddle2._pos.y + paddle2._height)
+		&& (ball._pos.y - ball._radius) >= (paddle2._pos.y + paddle2._height - (paddle2._height / 4)))
+		{
+			ball._velocity.x = 10;
+			return ;
+		}
+	if (ball._pos.x + ball._radius >= paddle2._pos.x
+		&& ball._pos.x + ball._radius <= paddle2._pos.x + paddle2._width
+		&& ball._pos.y + ball._radius >= paddle2._pos.y
+		&& ball._pos.y + ball._radius <= paddle2._pos.y + (paddle2._height / 4))
+		{
+			ball._velocity.y = -10
+			ball._velocity.x = -10; 
+		}
+	if (ball._pos.x + ball._radius >= paddle2._pos.x
+		&& ball._pos.x + ball._radius <= paddle2._pos.x + paddle2._width
+		&& ball._pos.y - ball._radius <= paddle2._pos.y + paddle2._height
+		&& ball._pos.y - ball._radius >= paddle2._pos.y + paddle2._height - (paddle2._height / 4))
+		{
+			ball._velocity.y = 10
+			ball._velocity.x = -10; 
+		}
+}
+
 function	ballPaddleCollision(ball: ballClass, paddle: paddleClass)
 {
-	let dx = Math.abs(ball._pos.x - paddle.getCenter().x);
-	let dy = Math.abs(ball._pos.y - paddle.getCenter().y);
-
-	if ((dx <= (ball._radius + paddle.getHalfWidth()))
-	&& (dy <= (ball._radius + paddle.getHalfHeight())))
+	PlayerOne_PaddleCollision(paddle1)
+	PlayerTwo_PaddleCollision(paddle2)
+	if (
+		ball._pos.x + ball._radius > paddle._pos.x &&
+		ball._pos.x - ball._radius < paddle._pos.x + paddle._width &&
+		ball._pos.y + ball._radius > paddle._pos.y &&
+		ball._pos.y - ball._radius < paddle._pos.y + paddle._height
+	)
 		ball._velocity.x *= -1;
 }
 
-const ball = new ballClass(vec2(canvas.width / 2, canvas.height / 2), vec2(10, 10), 30);
+const ball = new ballClass(vec2(canvas.width / 2, canvas.height / 2), vec2(10, 10), 20);
 const paddle1 = new paddleClass(vec2(20, canvas.height / 2), vec2(paddleSpeed, paddleSpeed), 20, 160, 87, 83);
-const paddle2 = new paddleClass(vec2(canvas.width - 40, canvas.height / 2), vec2(paddleSpeed, paddleSpeed), 20, 160, 38, 40);
+const paddle2 = new paddleClass(vec2(canvas.width - 30, canvas.height / 2), vec2(paddleSpeed, paddleSpeed), 20, 160, 38, 40);
 
 function	gameUpdate()
 {
+	// console.log(paddle1._pos.x + paddle1._width);
 	ball.update();
 	paddle1.update();
 	paddle2.update();
@@ -156,7 +226,9 @@ function	gameUpdate()
 	paddleCollision_Edges(paddle2);
 	ballCollisionEdges(ball);
 	ballPaddleCollision(ball,paddle1);
-	ballPaddleCollision(ball, paddle2);
+	ballPaddleCollision(ball,paddle2);
+	increaseScore(ball, paddle1, paddle2);
+
 }
 
 function	gameDraw()
